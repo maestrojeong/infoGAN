@@ -9,6 +9,7 @@ Author : Yeonwoo Jeong
 
 SAVE_DIR = './save/'
 MNIST_PATH =  "../MNIST_data"
+PICTURE_DIR = './asset/'
 
 #===========================================InfoGAN configuraion===========================================#
 class InfoGANConfig(object):
@@ -21,6 +22,6 @@ class InfoGANConfig(object):
         self.c_dim = 12
 
         self.batch_size = 100
-        self.log_every = 100
+        self.log_every = 2
 
         self.clip_b = 0.01# clip bounday variable to be clipped to be in [-self.clip_b, self.clip_b]

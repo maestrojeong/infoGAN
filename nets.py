@@ -26,10 +26,10 @@ class GenConv(object):
         with tf.variable_scope(self.name) as scope:
             if reuse:
                 scope.reuse_variables()
-            g = fc_layer(z, 7*7*128, activation = tf.nn.relu, batch_norm =False, scope = "fc1")
-            g = tf.reshape(g, [-1, 7, 7, 128])
-            g = deconvolution(g, [5, 5, 64, 128], output_shape = [self.batch_size, 14, 14, 64], strides = [1,2,2,1], activation = tf.nn.relu, scope = 'deconv1')
-            g = deconvolution(g, [5, 5, 1, 64], output_shape = [self.batch_size, 28, 28, 1], strides = [1,2,2,1], activation = tf.nn.sigmoid, scope = 'deconv2')
+            g = fc_layer(z, 7*7*32, activation = tf.nn.relu, batch_norm =False, scope = "fc1")
+            g = tf.reshape(g, [-1, 7, 7, 32])
+            g = deconvolution(g, [5, 5, 16, 32], output_shape = [self.batch_size, 14, 14, 16], strides = [1,2,2,1], activation = tf.nn.relu, scope = 'deconv1')
+            g = deconvolution(g, [5, 5, 1, 16], output_shape = [self.batch_size, 28, 28, 1], strides = [1,2,2,1], activation = tf.nn.sigmoid, scope = 'deconv2')
             return g
 
     @property
@@ -37,7 +37,7 @@ class GenConv(object):
         return [var for var in tf.global_variables() if self.name in var.name]
 
     def print_vars(self):
-        print("\n".join(["{}:{}".format(var.name, get_shape(var)) for var in self.vars]))
+        print("    "+"\n    ".join(["{}:{}".format(var.name, get_shape(var)) for var in self.vars]))
 
 class DisConv(object):
     def __init__(self, name = 'D_conv'):
@@ -68,7 +68,7 @@ class DisConv(object):
         return [var for var in tf.global_variables() if self.name in var.name]
 
     def print_vars(self):
-        print("\n".join(["{}:{}".format(var.name, get_shape(var)) for var in self.vars]))
+        print("    "+"\n    ".join(["{}:{}".format(var.name, get_shape(var)) for var in self.vars]))
 
 class QConv(object):
     def __init__(self, name = 'D_conv', c_dim = 12):
@@ -103,5 +103,5 @@ class QConv(object):
         return [var for var in tf.global_variables() if self.name in var.name]
 
     def print_vars(self):
-        print("\n".join(["{}:{}".format(var.name, get_shape(var)) for var in self.vars]))
+        print("    "+"\n    ".join(["{}:{}".format(var.name, get_shape(var)) for var in self.vars]))
 

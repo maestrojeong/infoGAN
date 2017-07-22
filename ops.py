@@ -29,9 +29,9 @@ class mnist_for_gan(object):
             self.size = 784
 
     def __call__(self, batch_size):
-        batch_image, _ = data.train.next_batch(batch_size)
+        batch_image, _ = self.data.train.next_batch(batch_size)
         if self.style == 'conv':
-            batch_image = np.reshape(batch_image, self.size, self.size, self.channel)
+            batch_image = np.reshape(batch_image, [-1, self.size, self.size, self.channel])
         return batch_image
 
 def mnistloader():
