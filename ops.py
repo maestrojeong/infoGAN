@@ -17,7 +17,7 @@ class mnist_for_gan(object):
         '''
         Args:
             style - string
-                'conv' to return 4D array setting 
+                'conv' to return 4D array setting
                 otherwise return 2D array setting
         '''
         self.data = input_data.read_data_sets(MNIST_PATH, one_hot = True)
@@ -30,7 +30,7 @@ class mnist_for_gan(object):
 
     def __call__(self, batch_size):
         batch_image, _ = data.train.next_batch(batch_size)
-        if self.style == 'conv'
+        if self.style == 'conv':
             batch_image = np.reshape(batch_image, self.size, self.size, self.channel)
         return batch_image
 
@@ -73,11 +73,11 @@ def leaky_relu(x, leak = 0.2):
 def flatten(x):
     '''
     Flatten tensor into 2D tensor
-    Args 
+    Args
         x - (n+1) tensor
             [batch_size, d_1, d_2, ..., d_n]
     Return
-        flatten - 2D tensor 
+        flatten - 2D tensor
             [batch_size, d_1*d2*...*d_n]
     '''
     x_shape = get_shape(x)
@@ -138,20 +138,20 @@ def deconvolution(input_, filter_shape, output_shape = None, strides = [1,1,1,1]
             output_shape = [input_shape[0], input_shape[1], input_shape[2], filter_shape[-2]]
 
         assert input_shape[-1]==filter_shape[-1], "inchannel value of input, and filter should be same"
-        assert output_shape[-1]==filter_shape[-2], "outchannel value of output, and filter should be same" 
+        assert output_shape[-1]==filter_shape[-2], "outchannel value of output, and filter should be same"
 
         if padding:
             padding = 'SAME'
-        else: 
+        else:
             padding = 'VALID'
-        w = tf.get_variable(name="w", shape = filter_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d(uniform=False)) 
-        deconv = tf.nn.conv2d_transpose(input_, w, output_shape = output_shape, strides=strides, padding=padding) 
+        w = tf.get_variable(name="w", shape = filter_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d(uniform=False))
+        deconv = tf.nn.conv2d_transpose(input_, w, output_shape = output_shape, strides=strides, padding=padding)
         if batch_norm:
             norm = tf.contrib.layers.batch_norm(deconv, center=True, scale=True, decay = 0.8, is_training=istrain, scope='batch_norm')
             return activation(norm)
         else:
             b = tf.get_variable(name="b", shape = output_shape[-1], initializer=tf.constant_initializer(0.01))
-            return activation(deconv + b)    
+            return activation(deconv + b)
 
 def convolution(input_, filter_shape, strides = [1,1,1,1], padding = True, activation = None, batch_norm = False, istrain = False, scope = None):
     '''
@@ -162,7 +162,7 @@ def convolution(input_, filter_shape, strides = [1,1,1,1], padding = True, activ
             [height, width, inchannel, outchannel]
         strides - 1D array 4 elements
             default to be [1,1,1,1]
-        padding - bool 
+        padding - bool
             Deteremines whether add padding or not
             True => add padding 'SAME'
             Fale => no padding  'VALID'
@@ -182,11 +182,10 @@ def convolution(input_, filter_shape, strides = [1,1,1,1], padding = True, activ
     with tf.variable_scope(scope or "conv"):
         if padding:
             padding = 'SAME'
-        else: 
+        else:
             padding = 'VALID'
         w = tf.get_variable(name="w", shape = filter_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d(uniform=False)) 
         conv = tf.nn.conv2d(input_, w, strides=strides, padding=padding)
-        
         if batch_norm:
             norm = tf.contrib.layers.batch_norm(conv, center=True, scale=True, decay = 0.8, is_training=istrain, scope='batch_norm')
             if activation is None:
@@ -201,8 +200,8 @@ def convolution(input_, filter_shape, strides = [1,1,1,1], padding = True, activ
 def fc_layer(input_, output_size, activation = None, batch_norm = False, istrain = False, scope = None):
     '''
     fully convlolution layer
-    Args : 
-        input_  - 2D tensor 
+    Args :
+        input_  - 2D tensor
             general shape : [batch, input_size]
         output_size - int
             shape of output 2D tensor

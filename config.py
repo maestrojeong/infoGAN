@@ -18,7 +18,7 @@ class InfoGANConfig(object):
         self.x_dim = 784
 
         self.z_dim = 100
-        self.c_dim = 12 
+        self.c_dim = 12
 
         self.batch_size = 100
         self.log_every = 100

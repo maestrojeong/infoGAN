@@ -62,7 +62,6 @@ class InfoGAN():
 	def train(self, sample_dir, ckpt_dir='ckpt', training_epoches = 1000000, batch_size = 64):
 		fig_count = 0
 		self.sess.run(tf.global_variables_initializer())
-		
 		for epoch in range(training_epoches):
 			X_b, _= self.data(batch_size)
 			z_b = sample_z(batch_size, self.z_dim)
@@ -79,7 +78,7 @@ class InfoGAN():
 					feed_dict={self.z: z_b, self.c: c_b}
 				)
 			# update Q
-			for _ in range(2):	
+			for _ in range(2):
 				self.sess.run(
 					self.Q_solver,
 					feed_dict={self.z: z_b, self.c: c_b}
