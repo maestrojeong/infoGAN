@@ -1,7 +1,7 @@
 '''
 InfoGAN + WGAN Model
 
-Updated on 2017.07.13
+Updated on 2017.07.22
 Author : Yeonwoo Jeong
 '''
 from ops import mnist_for_gan, optimizer, clip, get_shape
@@ -14,6 +14,7 @@ import tensorflow as tf
 import numpy as np
 import logging
 import os
+
 
 logging.basicConfig(format = "[%(asctime)s] %(message)s", datefmt="%m%d %H:%M:%S")
 logger = logging.getLogger(__name__)
@@ -68,17 +69,14 @@ class InfoGAN(InfoGANConfig):
         
         self.D_loss = -tf.reduce_mean(self.D_real)+tf.reduce_mean(self.D_fake)
         self.Q_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.C_classify, logits=self.Q_rct_classify))+tf.reduce_mean(tf.square(self.C_conti-self.Q_rct_conti))
-        self.G_loss = tf.reduce_mean(self.D_fake)        
+        self.G_loss = -tf.reduce_mean(self.D_fake)        
 
-        print("Generator_variables")
         self.generator.print_vars()
-        print("Discriminator_variables")
         self.discriminator.print_vars()
-        print("Classifier_variables")
         self.classifier.print_vars()
 
         self.D_optimizer = optimizer(self.D_loss, self.discriminator.vars)
-        
+
         with tf.control_dependencies([self.D_optimizer]):
             self.D_optimizer_wrapped = [tf.assign(var, clip(var, -self.clip_b, self.clip_b)) for var in self.discriminator.vars]
         
@@ -98,29 +96,65 @@ class InfoGAN(InfoGANConfig):
         saver = tf.train.Saver()
         saver.restore(sess, tf.train.latest_checkpoint(SAVE_DIR))
         logger.info("Restoring model done.")     
-        
+    
+    def sample_data(self, c_fix=False):
+        """sampling for data
+        Return:
+            X_sample, z_sample, c_sample
+        """
+        X_sample = self.dataset(self.batch_size)
+        z_sample = sample_z(self.batch_size, self.z_dim)
+
+        if c_fix:
+            conti_unit = np.linspace(-1, 1, 10)
+            conti = np.transpose(np.tile(conti_unit, [2,10]))
+            classify = list()
+            for i in range(10):
+                classify_unit = np.zeros(10)
+                classify_unit[i] = 1
+                for j in range(10):
+                    classify.append(classify_unit)
+            classify = np.array(classify)
+            c_sample = np.concatenate((classify, conti), axis = 1)
+            return X_sample, z_sample, c_sample
+
+        else:
+            c_sample = sample_c(self.batch_size, self.c_dim-10)
+            return X_sample, z_sample, c_sample
+
     def train(self, train_epochs):
         count = 0
         for epoch in tqdm(range(train_epochs), ascii = True, desc = "batch"):
-            d_iter = 100 if epoch < 25 else 5
-            
+            if epoch<25:
+                d_iter = 100
+                g_iter = 1
+            else:
+                # dynamic control
+                X_sample, z_sample, c_sample = self.sample_data() 
+                D_loss = self.sess.run(self.D_loss, feed_dict = {self.X : X_sample, self.Z : z_sample, self.C : c_sample})
+
+                if abs(D_loss) > 0.1 :
+                    d_iter = 5
+                    g_iter = 1
+                else:
+                    g_iter = 5
+                    d_iter = 1
+
             for _ in range(d_iter):
-                X_sample = self.dataset(self.batch_size)
-                z_sample = sample_z(self.batch_size, self.z_dim)
-                c_sample = sample_c(self.batch_size, self.c_dim-10)
+                X_sample, z_sample, c_sample = self.sample_data()
                 self.sess.run(self.D_optimizer_wrapped, feed_dict = {self.X : X_sample, self.Z : z_sample, self.C : c_sample})
             
-            for _ in range(1):
+            for _ in range(g_iter):
+                X_sample, z_sample, c_sample = self.sample_data()
                 self.sess.run(self.G_optimizer, feed_dict = {self.Z : z_sample, self.C : c_sample})
             
-            for _ in range(1):
+            for _ in range(g_iter):
+                X_sample, z_sample, c_sample = self.sample_data()
                 self.sess.run(self.Q_optimizer, feed_dict = {self.Z : z_sample, self.C : c_sample})
                 
             if epoch % self.log_every == self.log_every-1:
-                X_sample = self.dataset(self.batch_size)
-                z_sample = sample_z(self.batch_size, self.z_dim)
-                c_sample = sample_c(self.batch_size, self.c_dim-10)
-                
+                X_sample, z_sample, c_sample = self.sample_data(c_fix = True)
+
                 D_loss = self.sess.run(self.D_loss, feed_dict = {self.X : X_sample, self.Z : z_sample, self.C : c_sample})
                 G_loss = self.sess.run(self.G_loss, feed_dict = {self.Z : z_sample, self.C : c_sample})
                 Q_loss = self.sess.run(self.Q_loss, feed_dict = {self.Z : z_sample, self.C : c_sample})
@@ -128,10 +162,12 @@ class InfoGAN(InfoGANConfig):
                 gray_3d = self.sess.run(self.G_sample, feed_dict = {self.Z : z_sample, self.C : c_sample}) # self.batch_size x 28 x 28 x 1
                 gray_3d = np.squeeze(gray_3d)#self.batch_size x 28 x 28
 
+                # Store generated image on PICTURE_DIR
                 count+=1
-                fig = show_gray_image_3d(gray_3d, col=5, figsize = (10, 40), dataformat = 'CHW')
+                fig = show_gray_image_3d(gray_3d, col=10, figsize = (50, 50), dataformat = 'CHW')
                 fig.savefig(PICTURE_DIR+"{}.png".format(str(count).zfill(3)))
-                
+                plt.close(fig)
+
                 logger.info("Epoch({}/{}) D_loss : {}, G_loss : {}, Q_loss : {}".format(epoch+1, train_epochs, D_loss, G_loss, Q_loss))
                 saver=tf.train.Saver(max_to_keep = 10)
                 saver.save(self.sess, os.path.join(SAVE_DIR, 'model'), global_step = epoch+1)
@@ -140,4 +176,4 @@ class InfoGAN(InfoGANConfig):
 if __name__=='__main__':
     infogan = InfoGAN()
     infogan.initialize()
-    infogan.train(200)
+    infogan.train(30000)
