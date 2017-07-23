@@ -4,7 +4,7 @@ InfoGAN + WGAN Model
 Updated on 2017.07.22
 Author : Yeonwoo Jeong
 '''
-from ops import mnist_for_gan, optimizer, clip, get_shape
+from ops import mnist_for_gan, optimizer, clip, get_shape, softmax_cross_entropy
 from config import InfoGANConfig, SAVE_DIR, PICTURE_DIR
 from nets import GenConv, DisConv, QConv
 from utils import show_gray_image_3d
@@ -68,7 +68,7 @@ class InfoGAN(InfoGANConfig):
         self.C_classify, self.C_conti = tf.split(self.C, [10, self.c_dim-10], axis = 1)
         
         self.D_loss = -tf.reduce_mean(self.D_real)+tf.reduce_mean(self.D_fake)
-        self.Q_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.C_classify, logits=self.Q_rct_classify))+tf.reduce_mean(tf.square(self.C_conti-self.Q_rct_conti))
+        self.Q_loss = tf.reduce_mean(softmax_cross_entropy(labels=self.C_classify, logits=self.Q_rct_classify))+tf.reduce_mean(tf.square(self.C_conti-self.Q_rct_conti))
         self.G_loss = -tf.reduce_mean(self.D_fake)        
 
         self.generator.print_vars()
@@ -88,6 +88,7 @@ class InfoGAN(InfoGANConfig):
         
     def initialize(self):
         """Initialize all variables in graph"""
+        logger.info("Initializing model parameters")
         self.sess.run(tf.global_variables_initializer())
         
     def restore(self):
