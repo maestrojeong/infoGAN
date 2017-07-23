@@ -57,11 +57,12 @@ class DisConv(object):
         with tf.variable_scope(self.name) as scope:
             if reuse:
                 scope.reuse_variables()
-            d = convolution(x, [4, 4, 1, 64], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv1')
+            d = convolution(x, [5, 5, 1, 32], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv1')
             d = tf.nn.max_pool(d, ksize=[1,2,2,1], strides=[1,2,2,1], padding = 'SAME')
-            d = convolution(d, [4, 4, 64, 128], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv2')
+            d = convolution(d, [5, 5, 32, 32], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv2')
             d = tf.nn.max_pool(d, ksize=[1,2,2,1], strides=[1,2,2,1], padding = 'SAME')
             d = flatten(d)
+            d = fc_layer(d, 512, activation = tf.nn.sigmoid, scope = "d_fc1")
             d = fc_layer(d, 1, activation = tf.nn.sigmoid, scope="d_fc2")
         return d
     @property

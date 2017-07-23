@@ -94,7 +94,7 @@ class InfoGAN(InfoGANConfig):
         """Restore all variables in graph"""
         logger.info("Restoring model starts...")
         saver = tf.train.Saver()
-        saver.restore(sess, tf.train.latest_checkpoint(SAVE_DIR))
+        saver.restore(self.sess, tf.train.latest_checkpoint(SAVE_DIR))
         logger.info("Restoring model done.")     
     
     def sample_data(self, c_fix=False):
@@ -125,7 +125,7 @@ class InfoGAN(InfoGANConfig):
     def train(self, train_epochs):
         count = 0
         for epoch in tqdm(range(train_epochs), ascii = True, desc = "batch"):
-            if epoch<25:
+            if epoch < 25:
                 d_iter = 100
                 g_iter = 1
             else:
@@ -133,12 +133,18 @@ class InfoGAN(InfoGANConfig):
                 X_sample, z_sample, c_sample = self.sample_data() 
                 D_loss = self.sess.run(self.D_loss, feed_dict = {self.X : X_sample, self.Z : z_sample, self.C : c_sample})
 
-                if abs(D_loss) > 0.1 :
+                if abs(D_loss) < 0.01 :
+                    d_iter = 25
+                    g_iter = 1
+                elif abs(D_loss) < 0.1:
                     d_iter = 5
                     g_iter = 1
-                else:
-                    g_iter = 5
-                    d_iter = 1
+                elif abs(D_loss) < 0.9:
+                    d_iter = 5
+                    g_iter = 1
+                elif abs(D_loss) < 0.99:
+                    d_iter = 25
+                    g_iter = 1
 
             for _ in range(d_iter):
                 X_sample, z_sample, c_sample = self.sample_data()
@@ -176,4 +182,4 @@ class InfoGAN(InfoGANConfig):
 if __name__=='__main__':
     infogan = InfoGAN()
     infogan.initialize()
-    infogan.train(30000)
+    infogan.train(20000)
