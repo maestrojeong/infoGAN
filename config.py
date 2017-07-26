@@ -22,6 +22,6 @@ class InfoGANConfig(object):
         self.c_dim = 12
 
         self.batch_size = 100
-        self.log_every = 100
+        self.log_every = 1000
 
-        self.clip_b = 0.01# clip bounday variable to be clipped to be in [-self.clip_b, self.clip_b]
+        self.clip_b = 0.0001# clip bounday variable to be clipped to be in [-self.clip_b, self.clip_b]

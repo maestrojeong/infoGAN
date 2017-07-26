@@ -26,11 +26,10 @@ class GenConv(object):
         with tf.variable_scope(self.name) as scope:
             if reuse:
                 scope.reuse_variables()
-            g = fc_layer(z, 7*7*64, activation = tf.nn.relu, batch_norm =False, scope = "fc1")
-            g = tf.reshape(g, [-1, 7, 7, 64])
-            g = deconvolution(g, [5, 5, 32, 64], output_shape = [self.batch_size, 14, 14, 32], strides = [1,2,2,1], activation = leaky_relu, scope = 'deconv1')
-            g = deconvolution(g, [5, 5, 16, 32], output_shape = [self.batch_size, 28, 28, 16], strides = [1,2,2,1], activation = leaky_relu, scope = 'deconv2')
-            g = deconvolution(g, [5, 5, 1, 16], output_shape = [self.batch_size, 28, 28, 1], strides = [1,1,1,1], activation = tf.nn.sigmoid, scope = 'deconv3')
+            g = fc_layer(z, 7*7*128, activation = tf.nn.relu, batch_norm =False, scope = "fc1")
+            g = tf.reshape(g, [-1, 7, 7, 128])
+            g = deconvolution(g, [4, 4, 64, 128], output_shape = [self.batch_size, 14, 14, 64], strides = [1,2,2,1], activation = tf.nn.relu, scope = 'deconv1')
+            g = deconvolution(g, [4, 4, 1, 64], output_shape = [self.batch_size, 28, 28, 1], strides = [1,2,2,1], activation = tf.nn.sigmoid, scope = 'deconv2')
             return g
 
     @property
@@ -57,13 +56,12 @@ class DisConv(object):
         with tf.variable_scope(self.name) as scope:
             if reuse:
                 scope.reuse_variables()
-            d = convolution(x, [5, 5, 1, 32], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv1')
+            d = convolution(x, [4, 4, 1, 64], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv1')
             d = tf.nn.max_pool(d, ksize=[1,2,2,1], strides=[1,2,2,1], padding = 'SAME')
-            d = convolution(d, [5, 5, 32, 32], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv2')
+            d = convolution(d, [4, 4, 64, 128], strides = [1,1,1,1], activation = leaky_relu, scope = 'conv2')
             d = tf.nn.max_pool(d, ksize=[1,2,2,1], strides=[1,2,2,1], padding = 'SAME')
             d = flatten(d)
-            d = fc_layer(d, 512, activation = tf.nn.sigmoid, scope = "d_fc1")
-            d = fc_layer(d, 1, activation = tf.nn.sigmoid, scope="d_fc2")
+            d = fc_layer(d, 1, scope="fc1")
         return d
     @property
     def vars(self):

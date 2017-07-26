@@ -153,7 +153,7 @@ def deconvolution(input_, filter_shape, output_shape = None, strides = [1,1,1,1]
             b = tf.get_variable(name="b", shape = output_shape[-1], initializer=tf.constant_initializer(0.01))
             return activation(deconv + b)
 
-def convolution(input_, filter_shape, strides = [1,1,1,1], padding = True, activation = None, batch_norm = False, istrain = False, scope = None):
+def convolution(input_, filter_shape, strides = [1,1,1,1], padding = False, activation = None, batch_norm = False, istrain = False, scope = None):
     '''
     Args:
         input_ - 4D tensor
@@ -192,7 +192,7 @@ def convolution(input_, filter_shape, strides = [1,1,1,1], padding = True, activ
                 return norm
             return activation(norm)
         else:
-            b = tf.get_variable(name="b", shape = filter_shape[-1], initializer=tf.constant_initializer(0.01))
+            b = tf.get_variable(name="b", shape = filter_shape[-1], initializer=tf.constant_initializer(0.001))
             if activation is None:
                 return conv + b
             return activation(conv + b)
@@ -232,3 +232,7 @@ def fc_layer(input_, output_size, activation = None, batch_norm = False, istrain
 def softmax_cross_entropy(logits, labels):
     '''softmax_cross_entropy, lables : correct label logits : predicts'''
     return tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels)
+
+def sigmoid_cross_entropy(logits, labels):
+    '''softmax_cross_entropy, lables : correct label logits : predicts'''
+    return tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=labels)

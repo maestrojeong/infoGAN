@@ -1,11 +1,13 @@
 '''
 Basic operation not based on tensorflow
 
-Updated on 2017.07.21
+Updated on 2017.07.26
 Author : Yeonwoo Jeong
 '''
 import matplotlib.pyplot as plt
 import numpy as np
+import imageio
+import os
 
 class struct:
     def __str__ (self):
@@ -16,6 +18,23 @@ class struct:
             print(Var)
         '''
         return "struct{\n    "+"\n   ".join(["{} : {}".format(key, vars(self)[key]) for key in vars(self).keys()]) + "\n}"
+
+def create_dir(dirname):
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+def make_gif(images_path, gif_path):
+    '''
+    Args:
+        images_path - list of string
+            images path should be ordered
+        gif_path - string
+            gif_path to be installed
+    '''
+    with imageio.get_writer(gif_path, mode='I') as writer:
+        for image_path in images_path:
+            image = imageio.imread(image_path)
+            writer.append_data(image)
 
 def show_gray_image(ax, image):
     '''
