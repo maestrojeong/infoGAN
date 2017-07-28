@@ -17,7 +17,7 @@ class InfoGANConfig(object):
         self.x_channel = 1
         self.x_size = 28
         self.x_dim = 784
-
+        self.lamb = 10
         self.z_dim = 100
         self.c_dim = 12
 

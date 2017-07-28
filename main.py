@@ -1,5 +1,5 @@
 '''
-InfoGAN + WGAN Model
+InfoGAN + WGAN-gp(weight clipping) Model
 
 Updated on 2017.07.26
 Author : Yeonwoo Jeong
@@ -61,6 +61,10 @@ class InfoGAN(InfoGANConfig):
         self.C = tf.placeholder(tf.float32, shape = [self.batch_size, self.c_dim])
         
         self.G_sample = self.generator(tf.concat([self.Z, self.C], axis=1))
+        self.epsilon = tf.random_uniform(shape=[],minval=0, maxval=1)# epsilon : sample from uniform [0,1]
+        # x_hat = epsilon*x_real + (1-epsilon)*x_gen
+        self.linear_ip = self.epsilon*self.X + (1-self.epsilon)*self.G_sample
+
         self.D_real = self.discriminator(self.X)
         self.D_fake = self.discriminator(self.G_sample, reuse = True)
         self.Q_rct = self.classifier(self.G_sample)
@@ -68,7 +72,10 @@ class InfoGAN(InfoGANConfig):
         self.Q_rct_classify, self.Q_rct_conti = tf.split(self.Q_rct, [10, self.c_dim-10],axis = 1)
         self.C_classify, self.C_conti = tf.split(self.C, [10, self.c_dim-10], axis = 1)
         
-        self.D_loss = -tf.reduce_mean(self.D_real)+tf.reduce_mean(self.D_fake)
+        self.D_ip = self.discriminator(self.linear_ip, reuse=True)
+        self.gradient = tf.gradients(self.D_ip, self.linear_ip)
+
+        self.D_loss = -tf.reduce_mean(self.D_real)+tf.reduce_mean(self.D_fake)+self.lamb*tf.square(tf.norm(self.gradient, axis=1) - 1 )
         #self.D_loss = tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_real, labels=tf.ones_like(self.D_real))) + tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_fake, labels=tf.zeros_like(self.D_fake)))
         self.Q_loss = tf.reduce_mean(softmax_cross_entropy(labels=self.C_classify, logits=self.Q_rct_classify))+tf.reduce_mean(tf.square(self.C_conti-self.Q_rct_conti))
         #self.G_loss = tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_fake, labels=tf.ones_like(self.D_fake)))
@@ -79,11 +86,12 @@ class InfoGAN(InfoGANConfig):
         self.classifier.print_vars()
 
         self.D_optimizer = optimizer(self.D_loss, self.discriminator.vars)
-
+        '''
+        deprecate weight clipping stead use gradient penalty stands for gp
         self.clip_b = tf.Variable(self.clip_b, trainable=False, name="clipper")
         with tf.control_dependencies([self.D_optimizer]):
             self.D_optimizer_wrapped = [tf.assign(var, clip(var, -self.clip_b, self.clip_b)) for var in self.discriminator.vars]
-        
+        '''     
         self.Q_optimizer = optimizer(self.Q_loss, self.generator.vars + self.classifier.vars)
         self.G_optimizer = optimizer(self.G_loss, self.generator.vars)
 
