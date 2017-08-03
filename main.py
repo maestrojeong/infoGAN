@@ -1,7 +1,11 @@
 '''
-InfoGAN + WGAN-gp(weight clipping) Model
+InfoGAN Model
+    wgan(gradient-penalty)
+    wgan(weight_clipping)
+    gan
 
-Updated on 2017.07.26
+
+Updated on 2017.08.31
 Author : Yeonwoo Jeong
 '''
 from ops import mnist_for_gan, optimizer, clip, get_shape, softmax_cross_entropy, sigmoid_cross_entropy
@@ -68,6 +72,8 @@ class InfoGAN(InfoGANConfig):
         self.Q_rct_classify, self.Q_rct_conti = tf.split(self.Q_rct, [10, self.c_dim-10],axis = 1)
         self.C_classify, self.C_conti = tf.split(self.C, [10, self.c_dim-10], axis = 1)
 
+        '''
+        # WGAN_gp
         # x_hat = epsilon*x_real + (1-epsilon)*x_gen
         self.epsilon = tf.random_uniform(shape=[self.batch_size, 1, 1, 1], minval=0.0, maxval=1.0)# epsilon : sample from uniform [0,1]
         self.linear_ip = self.epsilon*self.X + (1-self.epsilon)*self.G_sample
@@ -75,22 +81,21 @@ class InfoGAN(InfoGANConfig):
         self.gradient = tf.gradients(self.D_ip, [self.linear_ip])[0]
         self.gradient_penalty = tf.reduce_mean(tf.square(tf.norm(self.gradient, axis=1) - 1.))
 
-        # classification error + regression error
-        self.Q_loss = tf.reduce_mean(softmax_cross_entropy(labels=self.C_classify, logits=self.Q_rct_classify))+tf.reduce_mean(tf.square(self.C_conti-self.Q_rct_conti))
         self.G_loss = -tf.reduce_mean(self.D_fake)   
         self.D_loss = -tf.reduce_mean(self.D_real)+tf.reduce_mean(self.D_fake)+self.lamb*self.gradient_penalty  
-        
         '''
-        Normal gan with KL
-		self.D_loss = tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_real, labels=tf.ones_like(self.D_real))) + tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_fake, labels=tf.zeros_like(self.D_fake)))
+        
+        # classification error + regression error
+        self.Q_loss = tf.reduce_mean(softmax_cross_entropy(labels=self.C_classify, logits=self.Q_rct_classify))+tf.reduce_mean(tf.square(self.C_conti-self.Q_rct_conti))
+        self.D_loss = tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_real, labels=tf.ones_like(self.D_real))) + tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_fake, labels=tf.zeros_like(self.D_fake)))
         self.G_loss = tf.reduce_mean(sigmoid_cross_entropy(logits=self.D_fake, labels=tf.ones_like(self.D_fake)))
-		'''
 
         self.generator.print_vars()
         self.discriminator.print_vars()
         self.classifier.print_vars()
 
         self.D_optimizer = optimizer(self.D_loss, self.discriminator.vars)
+
         '''
         deprecate weight clipping stead use gradient penalty stands for gp
 

@@ -1,0 +1,6 @@
+*.gif
+*.png
+.ipynb*
+__pycache__
+MNIST_data
+

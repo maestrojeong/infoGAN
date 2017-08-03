@@ -59,7 +59,7 @@ class DisConv(object):
             d = convolution(x, [4, 4, 1, 32], strides = [1, 2, 2, 1], activation = leaky_relu, scope = 'conv1')
             d = flatten(d)
             d = fc_layer(d, 128, activation=leaky_relu, scope="fc1")
-            d = fc_layer(d, 1, scope="fc2")
+            d = fc_layer(d, 1, activation=tf.nn.sigmoid, scope="fc2")
         return d
     @property
     def vars(self):
